@@ -1,10 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta http-equiv="refresh" content="0;url=https://movies2watch.tv/movie/watch-bridge-of-spies-hd-18281">
-  <title>Redirecting...</title>
+  <title>Street View Roadtrip - Start in Budapest</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    #street-view {
+      width: 100%;
+      height: 80vh;
+    }
+    #controls {
+      text-align: center;
+      margin-top: 10px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-  <p>If you are not redirected automatically, <a href="https://movies2watch.tv/movie/watch-bridge-of-spies-hd-18281">click here</a>.</p>
+  <h2 style="text-align:center;">🧭 Internet Roadtrip from Budapest</h2>
+  <div id="street-view"></div>
+  <div id="controls">
+    <button onclick="move('forward')">⬆️ Forward</button>
+    <button onclick="move('left')">⬅️ Left</button>
+    <button onclick="move('right')">➡️ Right</button>
+    <button onclick="move('back')">⬇️ Back</button>
+  </div>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <script>
+    let panorama, svService, currentPanoId;
+
+    function initStreetView() {
+      const startLocation = { lat: 47.4979, lng: 19.0402 }; // Budapest
+
+      svService = new google.maps.StreetViewService();
+      panorama = new google.maps.StreetViewPanorama(
+        document.getElementById("street-view"), {
+          position: startLocation,
+          pov: { heading: 0, pitch: 0 },
+          visible: true,
+        }
+      );
+
+      panorama.addListener('position_changed', () => {
+        currentPanoId = panorama.getPano();
+      });
+    }
+
+    function move(direction) {
+      svService.getPanorama({ pano: currentPanoId }, (data, status) => {
+        if (status === "OK") {
+          const links = data.links;
+          let nextLink;
+
+          if (direction === 'forward') {
+            nextLink = findClosestLink(links, panorama.getPov().heading);
+          } else if (direction === 'left') {
+            nextLink = findClosestLink(links, panorama.getPov().heading - 90);
+          } else if (direction === 'right') {
+            nextLink = findClosestLink(links, panorama.getPov().heading + 90);
+          } else if (direction === 'back') {
+            nextLink = findClosestLink(links, panorama.getPov().heading + 180);
+          }
+
+          if (nextLink) {
+            panorama.setPano(nextLink.pano);
+            panorama.setPov({ heading: nextLink.heading, pitch: 0 });
+          } else {
+            alert("No link in that direction!");
+          }
+        }
+      });
+    }
+
+    function findClosestLink(links, desiredHeading) {
+      desiredHeading = (desiredHeading + 360) % 360;
+      let closest = null;
+      let smallestDiff = 360;
+
+      links.forEach(link => {
+        const diff = Math.abs(((link.heading - desiredHeading + 540) % 360) - 180);
+        if (diff < smallestDiff) {
+          smallestDiff = diff;
+          closest = link;
+        }
+      });
+
+      return closest;
+    }
+
+    window.onload = initStreetView;
+  </script>
 </body>
 </html>
